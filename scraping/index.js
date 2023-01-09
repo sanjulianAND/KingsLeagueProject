@@ -1,43 +1,45 @@
 import * as cheerio from 'cheerio'
 
 const URLs = {
-    leaderboardLink: "https://kingsleague.pro/estadisticas/clasificacion/"
+  leaderBoardLink: 'https://kingsleague.pro/estadisticas/clasificacion/'
 }
 
 async function scrape (url) {
-    const res = await fetch (url)
-    const html = await res.text()
-    return cheerio.load(html)
+  const res = await fetch(url)
+  const html = await res.text()
+  return cheerio.load(html)
 }
-async function getLeaderBorad(){
-    const $ = scrape(URLs.leaderboardLink)
+async function getLeaderBoard () {
+  const $ = await scrape(URLs.leaderBoardLink)
+  const $rows = $('table tbody tr')
 
-    $('table tbody tr').each((index, el) =>{
-        //console.log($(el).text())
-        const rawTeam = $(el).find(".fs-table-text_3").text()
-        const rawVictories = $(el).find(".fs-table-text_4").text()
-        const rawDefeats = $(el).find(".fs-table-text_5").text()
-        const rawScoredGoals = $(el).find(".fs-table-text_6").text()
-        const rawConcededGoals = $(el).find(".fs-table-text_7").text()
-        const rawCardsYellow = $(el).find(".fs-table-text_8").text()
-        const rawCardsRed = $(el).find(".fs-table-text_9").text()
-    
-        console.log({
-            rawTeam,
-            rawVictories
-        })
+  // Crea un array con key y value
+  const LEADERBOARD_SELECTORS = {
+    team: '.fs-table-text_3',
+    wins: '.fs-table-text_4',
+    defeats: '.fs-table-text_5',
+    scoredGoals: '.fs-table-text_6',
+    concededGoals: '.fs-table-text_7',
+    yellowCards: '.fs-table-text_8',
+    redCards: '.fs-table-text_9'
+  }
+
+  // Este código sirve para quitar los espacios, saltos de línea y carácteres especiales de un texto
+  const cleanText = text => text
+    .replace(/\t|\n|\s:/g, '')
+    .replace(/.*:/g, ' ')
+    .trim()
+
+  const leaderBoardSelectorEntries = Object.entries(LEADERBOARD_SELECTORS)
+
+  $rows.each((index, el) => {
+    const leaderBoardEntries = leaderBoardSelectorEntries.map(([key, selector]) => {
+      const rawValue = $(el).find(selector).text()
+      const value = cleanText(rawValue)
+      return [key, value]
     })
+    console.log(Object.fromEntries(leaderBoardEntries))
+  })
 }
 
-
-
-/*
-const leaderboard =[{
-    team: "Team 1",
-    victories: 0,
-    defeats: 0,
-    goalsScored: 0, 
-    goalsConceded: 0,
-    cardsYellow: 0,
-    cardsRed: 0,
-}]*/
+await getLeaderBoard()
